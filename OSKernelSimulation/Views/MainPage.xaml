@@ -1,0 +1,26 @@
+﻿<local:AppleAnimationPage
+    x:Class="OSKernelSimulation.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:OSKernelSimulation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"> 
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock FontSize="24">操作系统内核模拟</TextBlock>
+        <GridView HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1">
+            <Button Background="{ThemeResource ContentDialogBorderThemeBrush}" Click="BtnCPUDispatcher_Click">
+                <StackPanel>
+                    <Image Width="200" Height="200" Source="ms-appx:///Assets/CPUDispatcherSimu.png"/>
+                    <TextBlock FontSize="16" Foreground="White">模拟单个的单核CPU调度多个单线程的进程<LineBreak/>算法为 多级反馈队列调度 和 时间片轮转</TextBlock>
+                </StackPanel>
+            </Button>
+        </GridView>
+        <TextBlock Grid.Row="2" HorizontalAlignment="Right">Copyright 2016 牟浩楠</TextBlock>
+    </Grid>
+</local:AppleAnimationPage>

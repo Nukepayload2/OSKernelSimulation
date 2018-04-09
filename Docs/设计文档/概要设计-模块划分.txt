@@ -1,0 +1,59 @@
+Public Class CPUCoreDispatcherSimulator
+模拟为一个CPU核心编写的采用多级队列反馈式调度策略调度。会随着OSKernelSimulation.Portable.CPUDispatcherSimulator一起实例化。
+
+Public Class CPUDispatcherCommandList
+用于安排进程启动信息的命令列表
+
+Public Class CPUDispatcherSimulator
+模拟CPU调度。此类是单实例的。
+
+Public Class DispatcherLogItem
+调度器单步执行的快照
+
+Public Class DispatcherLogManager
+调度器执行的快照管理器
+
+Friend Module EnumHelper
+用于将枚举类型成员整理
+
+Public Class JobTimeline
+描述进程何时运行计算，何时被阻塞
+
+Public Class JobTimelineItem
+表示一个32位的进程的某一个计算或阻塞
+
+Public Class PCBSilm
+简易的进程控制块
+
+Friend Delegate Sub ProcessDelegate
+表示枚举进程回调函数
+
+Public Class ProcessSimulator
+模拟一个进程
+
+Public Class ProcessSnapshot
+进程的单步执行状态快照
+
+Public Class ProcessStartInfo
+单个进程的启动信息
+
+Public Class SimulationException
+表示模拟中产生的异常，通常用于应对不合理的输入和内在的bug。
+
+Public Class TCBSilm
+线程控制块
+
+Friend Module ThreadJobExtension
+提供计算本次执行时间功能
+
+Public Enum ThreadPriorityLevel
+线程的优先级
+
+Public Class ThreadSimulator
+模拟一个线程
+
+Public Class ThreadSnapshot
+线程单步执行快照
+
+Public Enum ThreadStateSilm
+线程的状态

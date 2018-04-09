@@ -1,0 +1,245 @@
+﻿<local:AppleAnimationPage
+    x:Class="OSKernelSimulation.UniCoreDispatcherPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:OSKernelSimulation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Page.Resources>
+        <local:StartRoundConverter x:Key="startRoundConv"/>
+        <local:PriorityConverter x:Key="priConv"/>
+        <local:SimulatorViewModel x:Key="simu"/>
+        <local:ProcessStartInfoViewModel x:Key="procStart"/>
+        <local:IsIOOperationColorConverter x:Key="ioconv"/>
+        <local:NotConverter x:Key="notconv"/>
+        <Style TargetType="GridViewHeaderItem" >
+            <Setter Property="FontSize" Value="32"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="funcName">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style TargetType="ListViewItem" x:Key="fullListItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        </Style>
+    </Page.Resources>
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <local:ErrorBlock x:Name="ErrBlock" Background="Red" Grid.ColumnSpan="3"/>
+        <ListView ItemContainerStyle="{StaticResource fullListItem}" x:Name="LstProcesses" ItemsSource="{Binding Source={StaticResource simu},Path=SimulatorStartCommands.Processes}" Grid.Row="1">
+            <FlyoutBase.AttachedFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem FontFamily="Segoe MDL2 Assets" Text="&#xE107;  删除" Click="BtnDelete_Click"/>
+                    <MenuFlyoutItem FontFamily="Segoe MDL2 Assets" Text="&#xE104;  修改" Click="BtnModify_Click"/>
+                </MenuFlyout>
+            </FlyoutBase.AttachedFlyout>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Padding="4" RightTapped="LstProcesses_RightTapped" Background="{ThemeResource SystemControlBackgroundAltMediumLowBrush}">
+                        <TextBlock>映像名:<Run Text="{Binding Name}"/></TextBlock>
+                        <TextBlock>优先级:<Run Text="{Binding BasePriority}"/></TextBlock>
+                        <TextBlock>开始时间：<Run Text="{Binding StartRound, Mode=TwoWay}"/></TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.Header>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock FontSize="32">进程</TextBlock>
+                    <Button x:Name="BtnAddProcess" Width="42" Height="42" Grid.Column="1">
+                        <Button.Flyout>
+                            <Flyout>
+                                <StackPanel DataContext="{Binding Source={StaticResource procStart},Path=ProcessStartInfo}" MinWidth="200" Margin="4,0">
+                                    <TextBlock x:Name="TblProcTitle" FontSize="24">添加新进程</TextBlock>
+                                    <TextBlock Style="{StaticResource funcName}">进程名称</TextBlock>
+                                    <TextBlock>不要使用文件系统保留字符</TextBlock>
+                                    <TextBox x:Name="TxtName" Text="{Binding Name,Mode=TwoWay}" Margin="0,4"/>
+                                    <TextBlock Style="{StaticResource funcName}">优先级</TextBlock>
+                                    <TextBlock>优先级越高，最容易被调度上，但是每次执行时间较短</TextBlock>
+                                    <ComboBox SelectedIndex="{Binding BasePriority,Mode=TwoWay, Converter={StaticResource priConv}}" Margin="0,4" HorizontalAlignment="Stretch">
+                                        <ComboBoxItem>最低</ComboBoxItem>
+                                        <ComboBoxItem>低于普通</ComboBoxItem>
+                                        <ComboBoxItem>普通</ComboBoxItem>
+                                        <ComboBoxItem>高于普通</ComboBoxItem>
+                                        <ComboBoxItem>最高</ComboBoxItem>
+                                    </ComboBox>
+                                    <TextBlock Style="{StaticResource funcName}">开始时间</TextBlock>
+                                    <TextBlock>进程在第几个时间片启动了</TextBlock>
+                                    <TextBox Margin="0,4" Text="{Binding StartRound, Mode=TwoWay, Converter={StaticResource startRoundConv}}"></TextBox>
+                                    <Button Padding="32,4" HorizontalAlignment="Right" Click="BtnCreateProcess_Click">
+                                        <SymbolIcon Symbol="Accept" />
+                                    </Button>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                        <SymbolIcon Symbol="Add"/>
+                    </Button>
+                </Grid>
+            </ListView.Header>
+            <ListView.Footer>
+                <Grid>
+                    <TextBlock Style="{StaticResource funcName}">存档和读档</TextBlock>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal">
+                        <ProgressRing x:Name="PrgIO" Margin="2,0" Width="42" Height="42"/>
+                        <Button Width="42" Height="42" Margin="2,0" Click="BtnSaveCommandList_Click">
+                            <SymbolIcon Symbol="Save"/>
+                        </Button>
+                        <Button Width="42" Height="42" Margin="2,0" Click="BtnLoadCommandList_Click">
+                            <SymbolIcon Symbol="OpenFile"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </ListView.Footer>
+        </ListView>
+        <ListView ItemContainerStyle="{StaticResource fullListItem}" x:Name="LstTasks" ItemsSource="{Binding ElementName=LstProcesses,Path=SelectedItem.InitialTimeline.Jobs}" Margin="4,0" Grid.Column="1"  Grid.Row="1">
+            <FlyoutBase.AttachedFlyout>
+                <MenuFlyout Placement="Right">
+                    <MenuFlyoutItem FontFamily="Segoe MDL2 Assets" Text="&#xE107;  删除" Click="BtnDeleteTsk_Click"/>
+                    <MenuFlyoutItem FontFamily="Segoe MDL2 Assets" Text="&#xE104;  修改" Click="BtnModifyTsk_Click"/>
+                </MenuFlyout>
+            </FlyoutBase.AttachedFlyout>
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Padding="4,12" Background="{Binding IsIOOperation,Mode=TwoWay,Converter={StaticResource ioconv}}">
+                        <TextBlock Foreground="White">时间片:<Run Text="{Binding Length,Mode=TwoWay}"/></TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.Header>
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock FontSize="32">任务</TextBlock>
+                        <Button x:Name="BtnAddNewTask" Width="42" Height="42" Grid.Column="1" Click="BtnAddNewTask_Click">
+                            <Button.Flyout>
+                                <Flyout>
+                                    <StackPanel DataContext="{Binding Source={StaticResource procStart},Path=JobStartInfo}" MinWidth="200" Margin="4,0">
+                                        <TextBlock x:Name="TblTaskHeader" FontSize="24">添加新任务</TextBlock>
+                                        <TextBlock Style="{StaticResource funcName}">执行时间</TextBlock>
+                                        <TextBlock>输入数字，单位是时间片</TextBlock>
+                                        <Slider Value="{Binding Length,Mode=TwoWay}" Minimum="1" Maximum="50" Margin="0,4"/>
+                                        <TextBlock Style="{StaticResource funcName}">类型</TextBlock>
+                                        <TextBlock>这个任务是计算还是IO</TextBlock>
+                                        <StackPanel>
+                                            <RadioButton IsChecked="{Binding IsIOOperation,Mode=TwoWay,Converter={StaticResource notconv}}">计算型</RadioButton>
+                                            <RadioButton IsChecked="{Binding IsIOOperation,Mode=TwoWay}">IO型</RadioButton>
+                                        </StackPanel>
+                                        <Button Click="BtnAddTask_Click" Padding="32,4" HorizontalAlignment="Right">
+                                            <SymbolIcon Symbol="Accept" />
+                                        </Button>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                            <SymbolIcon Symbol="Add"/>
+                        </Button>
+                    </Grid>
+                    <TextBlock FontSize="16">所选的进程有这些任务</TextBlock>
+                </StackPanel>
+            </ListView.Header>
+            <ListView.Footer>
+                <StackPanel Margin="0,0,0,4" HorizontalAlignment="Right" >
+                    <TextBlock Style="{StaticResource funcName}">图例</TextBlock>
+                    <StackPanel Orientation="Horizontal">
+                        <Rectangle Fill="DodgerBlue" Width="22" Height="22"/>
+                        <TextBlock Margin="2,0,8,0">计算</TextBlock>
+                        <Rectangle Fill="ForestGreen" Width="22" Height="22"/>
+                        <TextBlock Margin="2,0,8,0">IO</TextBlock>
+                    </StackPanel>
+                </StackPanel>
+            </ListView.Footer>
+        </ListView>
+        <ListView Grid.Column="2"  Grid.Row="1" ItemsSource="{Binding Source={StaticResource simu},Path=Simulator.Core.Snapshots.Logs}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ListView ScrollViewer.HorizontalScrollMode="Disabled" 
+                              ScrollViewer.VerticalScrollMode="Disabled"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                              ItemsSource="{Binding Snapshots}"
+                              >
+                        <ListView.Header>
+                            <StackPanel>
+                                <StackPanel.Resources>
+                                    <local:VisibilityConverter x:Key="visiConv"/>
+                                </StackPanel.Resources>
+                                <TextBlock FontSize="20">执行后时间：<Run Text="{Binding CurrentProcessTime}"/></TextBlock>
+                                <ToggleButton x:Name="tglQueueSnapshot">点击查看队列快照...</ToggleButton>
+                                <TextBlock Visibility="{Binding ElementName=tglQueueSnapshot,Path=IsChecked,Converter={StaticResource visiConv}}" TextWrapping="Wrap" Text="{Binding QueuesDescription}"/>
+                                <TextBlock>此次运行和等待相关进程：</TextBlock>
+                            </StackPanel>
+                        </ListView.Header>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <StackPanel>
+                                        <TextBlock>PID：<Run Text="{Binding ProcessId}"/></TextBlock>
+                                        <TextBlock>进程名:<Run Text="{Binding ProcessName}"/></TextBlock>
+                                        <StackPanel DataContext="{Binding MainThreadSnapshot}">
+                                            <TextBlock>此次经过时间：<Run Text="{Binding WorkTime}"/></TextBlock>
+                                            <TextBlock>执行总进度(不计阻塞)：<Run Text="{Binding PieceAt}"/></TextBlock>
+                                            <TextBlock>执行时状态：<Run Text="{Binding RunningState}"/></TextBlock>
+                                            <TextBlock>执行时优先级：<Run Text="{Binding Priority}"/></TextBlock>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.Header>
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock FontSize="32">调度器</TextBlock>
+                        <Button Width="42" Height="42" Margin="2,0" HorizontalAlignment="Right">
+                            <Button.Flyout>
+                                <Flyout>
+                                    <StackPanel DataContext="{StaticResource simu}" Margin="4,0" MaxWidth="300">
+                                        <TextBlock FontSize="24">执行</TextBlock>
+                                        <TextBlock Style="{StaticResource funcName}">执行间隔</TextBlock>
+                                        <TextBlock TextWrapping="Wrap">立即执行所有进程，中间间隔一段时间用于显示动画。(间隔单位为毫秒)</TextBlock>
+                                        <Slider Minimum="1" Maximum="1000" Value="{Binding DelayTime, Mode=TwoWay}"/>
+                                        <Button HorizontalAlignment="Right" Margin="2" Padding="32,4" Click="btnRun_Click">
+                                            执行
+                                        </Button>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                            <SymbolIcon Symbol="Play"/>
+                        </Button>
+                    </Grid>
+                    <TextBlock FontSize="16">当前执行情况</TextBlock>
+                </StackPanel>
+            </ListView.Header>
+            <ListView.Footer>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ProgressRing x:Name="prgExportLog" />
+                    <Button Margin="0,4,4,4" HorizontalAlignment="Right" Padding="32,4" Click="btnExportLog_Click" Grid.Column="1">导出执行日志</Button>
+                </Grid>
+            </ListView.Footer>
+        </ListView>
+    </Grid>
+</local:AppleAnimationPage>
